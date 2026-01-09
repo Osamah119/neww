@@ -1,748 +1,678 @@
 # OurEvent Platform - Database Schema
 
-## Entity Relationship Diagram (PlantUML)
+> مخطط قاعدة البيانات الكامل لمنصة فعالياتنا
 
-```plantuml
-@startuml OurEvent_Database_Schema
+## Entity Relationship Diagram
 
-!define PRIMARY_KEY(x) <b><color:#b8860b><&key></color> x</b>
-!define FOREIGN_KEY(x) <color:#aaaaaa><&key></color> x
-!define COLUMN(x) <color:#efefef><&media-record></color> x
-!define TABLE(x) entity x << (T,#FFAAAA) >>
+```mermaid
+erDiagram
+    %% ==========================================
+    %% USERS & AUTHENTICATION
+    %% ==========================================
+    
+    users {
+        uuid id PK
+        varchar email UK "not null"
+        varchar password_hash "not null"
+        varchar name "not null"
+        varchar phone
+        varchar avatar_url
+        enum role "admin|organizer|user"
+        boolean is_verified "default false"
+        boolean is_active "default true"
+        timestamp email_verified_at
+        timestamp last_login_at
+        timestamp created_at "not null"
+        timestamp updated_at "not null"
+    }
 
-skinparam backgroundColor #1a1a2e
-skinparam class {
-    BackgroundColor #16213e
-    BorderColor #0f3460
-    ArrowColor #e94560
-    FontColor #ffffff
-}
+    user_sessions {
+        uuid id PK
+        uuid user_id FK "not null"
+        varchar token UK "not null"
+        json device_info
+        varchar ip_address
+        timestamp expires_at "not null"
+        timestamp created_at "not null"
+    }
 
-' =============================================
-' USER & AUTHENTICATION
-' =============================================
+    password_resets {
+        uuid id PK
+        uuid user_id FK "not null"
+        varchar token UK "not null"
+        timestamp expires_at "not null"
+        timestamp used_at
+        timestamp created_at "not null"
+    }
 
-TABLE(users) {
-    PRIMARY_KEY(id): UUID
-    --
-    COLUMN(email): VARCHAR(255) <<unique, not null>>
-    COLUMN(password_hash): VARCHAR(255) <<not null>>
-    COLUMN(name): VARCHAR(255) <<not null>>
-    COLUMN(phone): VARCHAR(20)
-    COLUMN(avatar_url): VARCHAR(500)
-    COLUMN(role): ENUM('admin','organizer','user') <<default 'user'>>
-    COLUMN(is_verified): BOOLEAN <<default false>>
-    COLUMN(is_active): BOOLEAN <<default true>>
-    COLUMN(email_verified_at): TIMESTAMP
-    COLUMN(last_login_at): TIMESTAMP
-    COLUMN(created_at): TIMESTAMP <<not null>>
-    COLUMN(updated_at): TIMESTAMP <<not null>>
-}
+    %% ==========================================
+    %% ORGANIZERS
+    %% ==========================================
 
-TABLE(user_sessions) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(user_id): UUID <<not null>>
-    COLUMN(token): VARCHAR(500) <<unique, not null>>
-    COLUMN(device_info): JSON
-    COLUMN(ip_address): VARCHAR(45)
-    COLUMN(expires_at): TIMESTAMP <<not null>>
-    COLUMN(created_at): TIMESTAMP <<not null>>
-}
+    organizers {
+        uuid id PK
+        uuid user_id FK UK "not null"
+        varchar company_name "not null"
+        varchar company_name_ar
+        varchar email "not null"
+        varchar phone
+        varchar logo_url
+        text description
+        text description_ar
+        varchar website
+        varchar twitter
+        varchar instagram
+        varchar commercial_register
+        varchar tax_number
+        varchar bank_name
+        varchar bank_iban
+        boolean is_verified "default false"
+        decimal rating "default 0"
+        int total_events "default 0"
+        int total_attendees "default 0"
+        decimal total_revenue "default 0"
+        decimal commission_rate "default 10"
+        enum status "pending|active|suspended"
+        timestamp created_at "not null"
+        timestamp updated_at "not null"
+    }
 
-TABLE(password_resets) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(user_id): UUID <<not null>>
-    COLUMN(token): VARCHAR(255) <<unique, not null>>
-    COLUMN(expires_at): TIMESTAMP <<not null>>
-    COLUMN(used_at): TIMESTAMP
-    COLUMN(created_at): TIMESTAMP <<not null>>
-}
+    organizer_applications {
+        uuid id PK
+        uuid user_id FK "not null"
+        varchar company_name "not null"
+        text description
+        varchar commercial_register
+        enum status "pending|approved|rejected"
+        text admin_notes
+        uuid reviewed_by FK
+        timestamp reviewed_at
+        timestamp submitted_at "not null"
+        timestamp created_at "not null"
+    }
 
-' =============================================
-' ORGANIZERS
-' =============================================
+    organizer_documents {
+        uuid id PK
+        uuid organizer_id FK "not null"
+        uuid application_id FK
+        varchar name "not null"
+        varchar file_url "not null"
+        varchar file_type
+        int file_size
+        enum document_type "license|id|commercial|other"
+        timestamp created_at "not null"
+    }
 
-TABLE(organizers) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(user_id): UUID <<unique, not null>>
-    COLUMN(company_name): VARCHAR(255) <<not null>>
-    COLUMN(company_name_ar): VARCHAR(255)
-    COLUMN(email): VARCHAR(255) <<not null>>
-    COLUMN(phone): VARCHAR(20)
-    COLUMN(logo_url): VARCHAR(500)
-    COLUMN(cover_image_url): VARCHAR(500)
-    COLUMN(description): TEXT
-    COLUMN(description_ar): TEXT
-    COLUMN(website): VARCHAR(255)
-    COLUMN(twitter): VARCHAR(255)
-    COLUMN(instagram): VARCHAR(255)
-    COLUMN(linkedin): VARCHAR(255)
-    COLUMN(commercial_register): VARCHAR(50)
-    COLUMN(tax_number): VARCHAR(50)
-    COLUMN(bank_name): VARCHAR(100)
-    COLUMN(bank_iban): VARCHAR(34)
-    COLUMN(bank_account_name): VARCHAR(255)
-    COLUMN(is_verified): BOOLEAN <<default false>>
-    COLUMN(verified_at): TIMESTAMP
-    COLUMN(rating): DECIMAL(3,2) <<default 0>>
-    COLUMN(total_events): INT <<default 0>>
-    COLUMN(total_attendees): INT <<default 0>>
-    COLUMN(total_revenue): DECIMAL(12,2) <<default 0>>
-    COLUMN(commission_rate): DECIMAL(5,2) <<default 10>>
-    COLUMN(status): ENUM('pending','active','suspended') <<default 'pending'>>
-    COLUMN(created_at): TIMESTAMP <<not null>>
-    COLUMN(updated_at): TIMESTAMP <<not null>>
-}
+    %% ==========================================
+    %% GEOGRAPHIC & LOCATION
+    %% ==========================================
 
-TABLE(organizer_applications) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(user_id): UUID <<not null>>
-    COLUMN(company_name): VARCHAR(255) <<not null>>
-    COLUMN(description): TEXT
-    COLUMN(commercial_register): VARCHAR(50)
-    COLUMN(status): ENUM('pending','approved','rejected') <<default 'pending'>>
-    COLUMN(admin_notes): TEXT
-    COLUMN(reviewed_by): UUID
-    COLUMN(reviewed_at): TIMESTAMP
-    COLUMN(submitted_at): TIMESTAMP <<not null>>
-    COLUMN(created_at): TIMESTAMP <<not null>>
-}
+    regions {
+        uuid id PK
+        varchar name "not null"
+        varchar name_ar "not null"
+        varchar code UK
+        boolean is_active "default true"
+        timestamp created_at "not null"
+    }
 
-TABLE(organizer_documents) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(organizer_id): UUID <<not null>>
-    FOREIGN_KEY(application_id): UUID
-    COLUMN(name): VARCHAR(255) <<not null>>
-    COLUMN(file_url): VARCHAR(500) <<not null>>
-    COLUMN(file_type): VARCHAR(50)
-    COLUMN(file_size): INT
-    COLUMN(document_type): ENUM('license','id','commercial_register','other')
-    COLUMN(created_at): TIMESTAMP <<not null>>
-}
+    cities {
+        uuid id PK
+        uuid region_id FK "not null"
+        varchar name "not null"
+        varchar name_ar "not null"
+        varchar code UK
+        decimal latitude
+        decimal longitude
+        varchar timezone "default Asia/Riyadh"
+        boolean is_active "default true"
+        int sort_order "default 0"
+        timestamp created_at "not null"
+    }
 
-' =============================================
-' GEOGRAPHIC & LOCATION
-' =============================================
+    venues {
+        uuid id PK
+        uuid city_id FK "not null"
+        uuid organizer_id FK
+        varchar name "not null"
+        varchar name_ar "not null"
+        text description
+        varchar address "not null"
+        decimal latitude
+        decimal longitude
+        int capacity "not null"
+        varchar contact_phone
+        varchar contact_email
+        varchar website
+        varchar google_maps_url
+        boolean is_verified "default false"
+        boolean is_active "default true"
+        timestamp created_at "not null"
+        timestamp updated_at "not null"
+    }
 
-TABLE(regions) {
-    PRIMARY_KEY(id): UUID
-    --
-    COLUMN(name): VARCHAR(100) <<not null>>
-    COLUMN(name_ar): VARCHAR(100) <<not null>>
-    COLUMN(code): VARCHAR(10) <<unique>>
-    COLUMN(is_active): BOOLEAN <<default true>>
-    COLUMN(created_at): TIMESTAMP <<not null>>
-}
+    venue_images {
+        uuid id PK
+        uuid venue_id FK "not null"
+        varchar image_url "not null"
+        varchar alt_text
+        boolean is_primary "default false"
+        int sort_order "default 0"
+        timestamp created_at "not null"
+    }
 
-TABLE(cities) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(region_id): UUID <<not null>>
-    COLUMN(name): VARCHAR(100) <<not null>>
-    COLUMN(name_ar): VARCHAR(100) <<not null>>
-    COLUMN(code): VARCHAR(10) <<unique>>
-    COLUMN(latitude): DECIMAL(10,8)
-    COLUMN(longitude): DECIMAL(11,8)
-    COLUMN(timezone): VARCHAR(50) <<default 'Asia/Riyadh'>>
-    COLUMN(is_active): BOOLEAN <<default true>>
-    COLUMN(sort_order): INT <<default 0>>
-    COLUMN(created_at): TIMESTAMP <<not null>>
-}
+    venue_amenities {
+        uuid id PK
+        uuid venue_id FK "not null"
+        varchar name "not null"
+        varchar name_ar
+        varchar icon
+        timestamp created_at "not null"
+    }
 
-TABLE(venues) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(city_id): UUID <<not null>>
-    FOREIGN_KEY(organizer_id): UUID
-    COLUMN(name): VARCHAR(255) <<not null>>
-    COLUMN(name_ar): VARCHAR(255) <<not null>>
-    COLUMN(description): TEXT
-    COLUMN(description_ar): TEXT
-    COLUMN(address): VARCHAR(500) <<not null>>
-    COLUMN(address_ar): VARCHAR(500)
-    COLUMN(latitude): DECIMAL(10,8)
-    COLUMN(longitude): DECIMAL(11,8)
-    COLUMN(capacity): INT <<not null>>
-    COLUMN(contact_phone): VARCHAR(20)
-    COLUMN(contact_email): VARCHAR(255)
-    COLUMN(website): VARCHAR(255)
-    COLUMN(google_maps_url): VARCHAR(500)
-    COLUMN(is_verified): BOOLEAN <<default false>>
-    COLUMN(is_active): BOOLEAN <<default true>>
-    COLUMN(created_at): TIMESTAMP <<not null>>
-    COLUMN(updated_at): TIMESTAMP <<not null>>
-}
+    %% ==========================================
+    %% EVENT TYPES & CATEGORIES
+    %% ==========================================
 
-TABLE(venue_images) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(venue_id): UUID <<not null>>
-    COLUMN(image_url): VARCHAR(500) <<not null>>
-    COLUMN(alt_text): VARCHAR(255)
-    COLUMN(is_primary): BOOLEAN <<default false>>
-    COLUMN(sort_order): INT <<default 0>>
-    COLUMN(created_at): TIMESTAMP <<not null>>
-}
+    event_types {
+        uuid id PK
+        varchar name "not null"
+        varchar name_ar "not null"
+        varchar slug UK "not null"
+        text description
+        varchar icon
+        varchar color
+        boolean is_active "default true"
+        int sort_order "default 0"
+        timestamp created_at "not null"
+        timestamp updated_at "not null"
+    }
 
-TABLE(venue_amenities) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(venue_id): UUID <<not null>>
-    COLUMN(name): VARCHAR(100) <<not null>>
-    COLUMN(name_ar): VARCHAR(100)
-    COLUMN(icon): VARCHAR(50)
-    COLUMN(created_at): TIMESTAMP <<not null>>
-}
+    event_tags {
+        uuid id PK
+        varchar name "not null"
+        varchar name_ar
+        varchar slug UK "not null"
+        timestamp created_at "not null"
+    }
 
-' =============================================
-' EVENT TYPES & CATEGORIES
-' =============================================
+    %% ==========================================
+    %% EVENTS
+    %% ==========================================
 
-TABLE(event_types) {
-    PRIMARY_KEY(id): UUID
-    --
-    COLUMN(name): VARCHAR(100) <<not null>>
-    COLUMN(name_ar): VARCHAR(100) <<not null>>
-    COLUMN(slug): VARCHAR(100) <<unique, not null>>
-    COLUMN(description): TEXT
-    COLUMN(description_ar): TEXT
-    COLUMN(icon): VARCHAR(50)
-    COLUMN(color): VARCHAR(7)
-    COLUMN(is_active): BOOLEAN <<default true>>
-    COLUMN(sort_order): INT <<default 0>>
-    COLUMN(created_at): TIMESTAMP <<not null>>
-    COLUMN(updated_at): TIMESTAMP <<not null>>
-}
+    events {
+        uuid id PK
+        uuid organizer_id FK "not null"
+        uuid type_id FK "not null"
+        uuid venue_id FK
+        uuid city_id FK "not null"
+        varchar title "not null"
+        varchar title_ar
+        varchar slug UK "not null"
+        text description "not null"
+        text short_description
+        varchar cover_image_url
+        varchar address
+        decimal latitude
+        decimal longitude
+        timestamp date_start "not null"
+        timestamp date_end "not null"
+        timestamp registration_start
+        timestamp registration_end
+        int max_attendees
+        int current_attendees "default 0"
+        boolean is_paid "default false"
+        decimal min_price "default 0"
+        decimal max_price "default 0"
+        text terms_and_conditions
+        text refund_policy
+        enum status "draft|pending|published|closed|completed|cancelled"
+        boolean is_featured "default false"
+        timestamp featured_until
+        int views_count "default 0"
+        int likes_count "default 0"
+        timestamp published_at
+        timestamp cancelled_at
+        text cancellation_reason
+        uuid approved_by FK
+        timestamp approved_at
+        timestamp created_at "not null"
+        timestamp updated_at "not null"
+        timestamp deleted_at
+    }
 
-TABLE(event_tags) {
-    PRIMARY_KEY(id): UUID
-    --
-    COLUMN(name): VARCHAR(50) <<not null>>
-    COLUMN(name_ar): VARCHAR(50)
-    COLUMN(slug): VARCHAR(50) <<unique, not null>>
-    COLUMN(created_at): TIMESTAMP <<not null>>
-}
+    event_images {
+        uuid id PK
+        uuid event_id FK "not null"
+        varchar image_url "not null"
+        varchar thumbnail_url
+        varchar alt_text
+        boolean is_cover "default false"
+        int sort_order "default 0"
+        timestamp created_at "not null"
+    }
 
-' =============================================
-' EVENTS
-' =============================================
+    event_attachments {
+        uuid id PK
+        uuid event_id FK "not null"
+        varchar name "not null"
+        varchar file_url "not null"
+        enum file_type "pdf|image|document|other"
+        int file_size
+        boolean is_public "default true"
+        int download_count "default 0"
+        timestamp created_at "not null"
+    }
 
-TABLE(events) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(organizer_id): UUID <<not null>>
-    FOREIGN_KEY(type_id): UUID <<not null>>
-    FOREIGN_KEY(venue_id): UUID
-    FOREIGN_KEY(city_id): UUID <<not null>>
-    COLUMN(title): VARCHAR(255) <<not null>>
-    COLUMN(title_ar): VARCHAR(255)
-    COLUMN(slug): VARCHAR(300) <<unique, not null>>
-    COLUMN(description): TEXT <<not null>>
-    COLUMN(description_ar): TEXT
-    COLUMN(short_description): VARCHAR(500)
-    COLUMN(short_description_ar): VARCHAR(500)
-    COLUMN(cover_image_url): VARCHAR(500)
-    COLUMN(address): VARCHAR(500)
-    COLUMN(address_ar): VARCHAR(500)
-    COLUMN(latitude): DECIMAL(10,8)
-    COLUMN(longitude): DECIMAL(11,8)
-    COLUMN(date_start): TIMESTAMP <<not null>>
-    COLUMN(date_end): TIMESTAMP <<not null>>
-    COLUMN(registration_start): TIMESTAMP
-    COLUMN(registration_end): TIMESTAMP
-    COLUMN(max_attendees): INT
-    COLUMN(current_attendees): INT <<default 0>>
-    COLUMN(is_paid): BOOLEAN <<default false>>
-    COLUMN(min_price): DECIMAL(10,2) <<default 0>>
-    COLUMN(max_price): DECIMAL(10,2) <<default 0>>
-    COLUMN(terms_and_conditions): TEXT
-    COLUMN(terms_and_conditions_ar): TEXT
-    COLUMN(refund_policy): TEXT
-    COLUMN(refund_policy_ar): TEXT
-    COLUMN(status): ENUM('draft','pending','published','closed','completed','cancelled') <<default 'draft'>>
-    COLUMN(is_featured): BOOLEAN <<default false>>
-    COLUMN(featured_until): TIMESTAMP
-    COLUMN(views_count): INT <<default 0>>
-    COLUMN(likes_count): INT <<default 0>>
-    COLUMN(shares_count): INT <<default 0>>
-    COLUMN(published_at): TIMESTAMP
-    COLUMN(cancelled_at): TIMESTAMP
-    COLUMN(cancellation_reason): TEXT
-    COLUMN(admin_notes): TEXT
-    COLUMN(approved_by): UUID
-    COLUMN(approved_at): TIMESTAMP
-    COLUMN(created_at): TIMESTAMP <<not null>>
-    COLUMN(updated_at): TIMESTAMP <<not null>>
-    COLUMN(deleted_at): TIMESTAMP
-}
+    event_tag_mapping {
+        uuid id PK
+        uuid event_id FK "not null"
+        uuid tag_id FK "not null"
+        timestamp created_at "not null"
+    }
 
-TABLE(event_images) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(event_id): UUID <<not null>>
-    COLUMN(image_url): VARCHAR(500) <<not null>>
-    COLUMN(thumbnail_url): VARCHAR(500)
-    COLUMN(alt_text): VARCHAR(255)
-    COLUMN(is_cover): BOOLEAN <<default false>>
-    COLUMN(sort_order): INT <<default 0>>
-    COLUMN(created_at): TIMESTAMP <<not null>>
-}
+    %% ==========================================
+    %% TICKETS
+    %% ==========================================
 
-TABLE(event_attachments) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(event_id): UUID <<not null>>
-    COLUMN(name): VARCHAR(255) <<not null>>
-    COLUMN(file_url): VARCHAR(500) <<not null>>
-    COLUMN(file_type): ENUM('pdf','image','document','other')
-    COLUMN(file_size): INT
-    COLUMN(is_public): BOOLEAN <<default true>>
-    COLUMN(download_count): INT <<default 0>>
-    COLUMN(created_at): TIMESTAMP <<not null>>
-}
+    ticket_tiers {
+        uuid id PK
+        uuid event_id FK "not null"
+        varchar name "not null"
+        varchar name_ar
+        enum type "vip|standard|free"
+        text description
+        decimal price "not null"
+        decimal original_price
+        int quantity "not null"
+        int sold "default 0"
+        int reserved "default 0"
+        int max_per_order "default 10"
+        int min_per_order "default 1"
+        timestamp sale_start
+        timestamp sale_end
+        boolean is_active "default true"
+        int sort_order "default 0"
+        timestamp created_at "not null"
+        timestamp updated_at "not null"
+    }
 
-TABLE(event_tag_mapping) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(event_id): UUID <<not null>>
-    FOREIGN_KEY(tag_id): UUID <<not null>>
-    COLUMN(created_at): TIMESTAMP <<not null>>
-}
+    ticket_tier_benefits {
+        uuid id PK
+        uuid tier_id FK "not null"
+        varchar benefit "not null"
+        varchar benefit_ar
+        varchar icon
+        int sort_order "default 0"
+        timestamp created_at "not null"
+    }
 
-' =============================================
-' TICKETS
-' =============================================
+    tickets {
+        uuid id PK
+        uuid event_id FK "not null"
+        uuid tier_id FK "not null"
+        uuid user_id FK "not null"
+        uuid registration_id FK "not null"
+        uuid order_id FK "not null"
+        varchar ticket_number UK "not null"
+        varchar qr_code UK "not null"
+        varchar barcode
+        varchar attendee_name
+        varchar attendee_email
+        varchar attendee_phone
+        varchar seat_number
+        varchar seat_section
+        decimal price "not null"
+        decimal discount_amount "default 0"
+        enum status "active|used|cancelled|expired|refunded"
+        timestamp checked_in_at
+        uuid checked_in_by FK
+        timestamp cancelled_at
+        timestamp refunded_at
+        decimal refund_amount
+        text notes
+        timestamp created_at "not null"
+        timestamp updated_at "not null"
+    }
 
-TABLE(ticket_tiers) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(event_id): UUID <<not null>>
-    COLUMN(name): VARCHAR(100) <<not null>>
-    COLUMN(name_ar): VARCHAR(100)
-    COLUMN(type): ENUM('vip','standard','free') <<default 'standard'>>
-    COLUMN(description): TEXT
-    COLUMN(description_ar): TEXT
-    COLUMN(price): DECIMAL(10,2) <<not null>>
-    COLUMN(original_price): DECIMAL(10,2)
-    COLUMN(quantity): INT <<not null>>
-    COLUMN(sold): INT <<default 0>>
-    COLUMN(reserved): INT <<default 0>>
-    COLUMN(max_per_order): INT <<default 10>>
-    COLUMN(min_per_order): INT <<default 1>>
-    COLUMN(sale_start): TIMESTAMP
-    COLUMN(sale_end): TIMESTAMP
-    COLUMN(is_active): BOOLEAN <<default true>>
-    COLUMN(sort_order): INT <<default 0>>
-    COLUMN(created_at): TIMESTAMP <<not null>>
-    COLUMN(updated_at): TIMESTAMP <<not null>>
-}
+    %% ==========================================
+    %% ORDERS & PAYMENTS
+    %% ==========================================
 
-TABLE(ticket_tier_benefits) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(tier_id): UUID <<not null>>
-    COLUMN(benefit): VARCHAR(255) <<not null>>
-    COLUMN(benefit_ar): VARCHAR(255)
-    COLUMN(icon): VARCHAR(50)
-    COLUMN(sort_order): INT <<default 0>>
-    COLUMN(created_at): TIMESTAMP <<not null>>
-}
+    orders {
+        uuid id PK
+        uuid user_id FK "not null"
+        uuid event_id FK "not null"
+        varchar order_number UK "not null"
+        decimal subtotal "not null"
+        decimal discount_amount "default 0"
+        decimal service_fee "default 0"
+        decimal tax_amount "default 0"
+        decimal total_amount "not null"
+        varchar currency "default SAR"
+        enum status "pending|processing|completed|cancelled|refunded"
+        enum payment_status "pending|paid|failed|refunded"
+        varchar payment_method
+        varchar payment_gateway
+        varchar gateway_transaction_id
+        json gateway_response
+        varchar billing_name
+        varchar billing_email
+        varchar billing_phone
+        varchar coupon_code
+        varchar ip_address
+        text notes
+        timestamp paid_at
+        timestamp cancelled_at
+        timestamp refunded_at
+        timestamp expires_at
+        timestamp created_at "not null"
+        timestamp updated_at "not null"
+    }
 
-TABLE(tickets) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(event_id): UUID <<not null>>
-    FOREIGN_KEY(tier_id): UUID <<not null>>
-    FOREIGN_KEY(user_id): UUID <<not null>>
-    FOREIGN_KEY(registration_id): UUID <<not null>>
-    FOREIGN_KEY(order_id): UUID <<not null>>
-    COLUMN(ticket_number): VARCHAR(20) <<unique, not null>>
-    COLUMN(qr_code): VARCHAR(500) <<unique, not null>>
-    COLUMN(barcode): VARCHAR(50)
-    COLUMN(attendee_name): VARCHAR(255)
-    COLUMN(attendee_email): VARCHAR(255)
-    COLUMN(attendee_phone): VARCHAR(20)
-    COLUMN(seat_number): VARCHAR(20)
-    COLUMN(seat_section): VARCHAR(50)
-    COLUMN(price): DECIMAL(10,2) <<not null>>
-    COLUMN(discount_amount): DECIMAL(10,2) <<default 0>>
-    COLUMN(status): ENUM('active','used','cancelled','expired','refunded') <<default 'active'>>
-    COLUMN(checked_in_at): TIMESTAMP
-    COLUMN(checked_in_by): UUID
-    COLUMN(cancelled_at): TIMESTAMP
-    COLUMN(refunded_at): TIMESTAMP
-    COLUMN(refund_amount): DECIMAL(10,2)
-    COLUMN(notes): TEXT
-    COLUMN(created_at): TIMESTAMP <<not null>>
-    COLUMN(updated_at): TIMESTAMP <<not null>>
-}
+    order_items {
+        uuid id PK
+        uuid order_id FK "not null"
+        uuid tier_id FK "not null"
+        int quantity "not null"
+        decimal unit_price "not null"
+        decimal total_price "not null"
+        decimal discount_amount "default 0"
+        timestamp created_at "not null"
+    }
 
-' =============================================
-' ORDERS & PAYMENTS
-' =============================================
+    payments {
+        uuid id PK
+        uuid order_id FK "not null"
+        uuid user_id FK "not null"
+        decimal amount "not null"
+        varchar currency "default SAR"
+        varchar payment_method "not null"
+        varchar gateway "not null"
+        varchar gateway_transaction_id
+        json gateway_response
+        varchar card_last_four
+        varchar card_brand
+        enum status "pending|processing|completed|failed|refunded"
+        text failure_reason
+        varchar refund_id
+        decimal refund_amount
+        timestamp refunded_at
+        timestamp created_at "not null"
+        timestamp updated_at "not null"
+    }
 
-TABLE(orders) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(user_id): UUID <<not null>>
-    FOREIGN_KEY(event_id): UUID <<not null>>
-    COLUMN(order_number): VARCHAR(20) <<unique, not null>>
-    COLUMN(subtotal): DECIMAL(12,2) <<not null>>
-    COLUMN(discount_amount): DECIMAL(12,2) <<default 0>>
-    COLUMN(service_fee): DECIMAL(10,2) <<default 0>>
-    COLUMN(tax_amount): DECIMAL(10,2) <<default 0>>
-    COLUMN(total_amount): DECIMAL(12,2) <<not null>>
-    COLUMN(currency): VARCHAR(3) <<default 'SAR'>>
-    COLUMN(status): ENUM('pending','processing','completed','cancelled','refunded','partially_refunded') <<default 'pending'>>
-    COLUMN(payment_status): ENUM('pending','paid','failed','refunded','partially_refunded') <<default 'pending'>>
-    COLUMN(payment_method): VARCHAR(50)
-    COLUMN(payment_gateway): VARCHAR(50)
-    COLUMN(gateway_transaction_id): VARCHAR(255)
-    COLUMN(gateway_response): JSON
-    COLUMN(billing_name): VARCHAR(255)
-    COLUMN(billing_email): VARCHAR(255)
-    COLUMN(billing_phone): VARCHAR(20)
-    COLUMN(coupon_code): VARCHAR(50)
-    COLUMN(ip_address): VARCHAR(45)
-    COLUMN(user_agent): TEXT
-    COLUMN(notes): TEXT
-    COLUMN(paid_at): TIMESTAMP
-    COLUMN(cancelled_at): TIMESTAMP
-    COLUMN(refunded_at): TIMESTAMP
-    COLUMN(expires_at): TIMESTAMP
-    COLUMN(created_at): TIMESTAMP <<not null>>
-    COLUMN(updated_at): TIMESTAMP <<not null>>
-}
+    refunds {
+        uuid id PK
+        uuid order_id FK "not null"
+        uuid payment_id FK "not null"
+        uuid user_id FK "not null"
+        uuid processed_by FK
+        decimal amount "not null"
+        text reason
+        enum status "pending|approved|rejected|processed"
+        varchar gateway_refund_id
+        text admin_notes
+        timestamp processed_at
+        timestamp created_at "not null"
+        timestamp updated_at "not null"
+    }
 
-TABLE(order_items) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(order_id): UUID <<not null>>
-    FOREIGN_KEY(tier_id): UUID <<not null>>
-    COLUMN(quantity): INT <<not null>>
-    COLUMN(unit_price): DECIMAL(10,2) <<not null>>
-    COLUMN(total_price): DECIMAL(10,2) <<not null>>
-    COLUMN(discount_amount): DECIMAL(10,2) <<default 0>>
-    COLUMN(created_at): TIMESTAMP <<not null>>
-}
+    %% ==========================================
+    %% REGISTRATIONS
+    %% ==========================================
 
-TABLE(payments) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(order_id): UUID <<not null>>
-    FOREIGN_KEY(user_id): UUID <<not null>>
-    COLUMN(amount): DECIMAL(12,2) <<not null>>
-    COLUMN(currency): VARCHAR(3) <<default 'SAR'>>
-    COLUMN(payment_method): VARCHAR(50) <<not null>>
-    COLUMN(gateway): VARCHAR(50) <<not null>>
-    COLUMN(gateway_transaction_id): VARCHAR(255)
-    COLUMN(gateway_response): JSON
-    COLUMN(card_last_four): VARCHAR(4)
-    COLUMN(card_brand): VARCHAR(20)
-    COLUMN(status): ENUM('pending','processing','completed','failed','refunded') <<default 'pending'>>
-    COLUMN(failure_reason): TEXT
-    COLUMN(refund_id): VARCHAR(255)
-    COLUMN(refund_amount): DECIMAL(12,2)
-    COLUMN(refunded_at): TIMESTAMP
-    COLUMN(created_at): TIMESTAMP <<not null>>
-    COLUMN(updated_at): TIMESTAMP <<not null>>
-}
+    registrations {
+        uuid id PK
+        uuid event_id FK "not null"
+        uuid user_id FK "not null"
+        uuid order_id FK
+        varchar registration_number UK "not null"
+        int attendee_count "default 1"
+        decimal total_amount "not null"
+        enum status "pending|confirmed|cancelled|attended|no_show"
+        enum payment_status "pending|completed|failed|refunded"
+        enum check_in_status "not_checked|checked_in|checked_out"
+        timestamp checked_in_at
+        timestamp checked_out_at
+        varchar source "default web"
+        text notes
+        timestamp created_at "not null"
+        timestamp updated_at "not null"
+    }
 
-TABLE(refunds) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(order_id): UUID <<not null>>
-    FOREIGN_KEY(payment_id): UUID <<not null>>
-    FOREIGN_KEY(user_id): UUID <<not null>>
-    FOREIGN_KEY(processed_by): UUID
-    COLUMN(amount): DECIMAL(12,2) <<not null>>
-    COLUMN(reason): TEXT
-    COLUMN(status): ENUM('pending','approved','rejected','processed') <<default 'pending'>>
-    COLUMN(gateway_refund_id): VARCHAR(255)
-    COLUMN(admin_notes): TEXT
-    COLUMN(processed_at): TIMESTAMP
-    COLUMN(created_at): TIMESTAMP <<not null>>
-    COLUMN(updated_at): TIMESTAMP <<not null>>
-}
+    %% ==========================================
+    %% COUPONS & DISCOUNTS
+    %% ==========================================
 
-' =============================================
-' REGISTRATIONS
-' =============================================
+    coupons {
+        uuid id PK
+        uuid organizer_id FK
+        uuid event_id FK
+        varchar code UK "not null"
+        varchar name
+        text description
+        enum discount_type "percentage|fixed"
+        decimal discount_value "not null"
+        decimal max_discount
+        decimal min_order_amount
+        int max_uses
+        int max_uses_per_user "default 1"
+        int used_count "default 0"
+        timestamp starts_at
+        timestamp expires_at
+        boolean is_active "default true"
+        timestamp created_at "not null"
+        timestamp updated_at "not null"
+    }
 
-TABLE(registrations) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(event_id): UUID <<not null>>
-    FOREIGN_KEY(user_id): UUID <<not null>>
-    FOREIGN_KEY(order_id): UUID
-    COLUMN(registration_number): VARCHAR(20) <<unique, not null>>
-    COLUMN(attendee_count): INT <<default 1>>
-    COLUMN(total_amount): DECIMAL(12,2) <<not null>>
-    COLUMN(status): ENUM('pending','confirmed','cancelled','attended','no_show') <<default 'pending'>>
-    COLUMN(payment_status): ENUM('pending','completed','failed','refunded') <<default 'pending'>>
-    COLUMN(check_in_status): ENUM('not_checked','checked_in','checked_out') <<default 'not_checked'>>
-    COLUMN(checked_in_at): TIMESTAMP
-    COLUMN(checked_out_at): TIMESTAMP
-    COLUMN(source): VARCHAR(50) <<default 'web'>>
-    COLUMN(notes): TEXT
-    COLUMN(created_at): TIMESTAMP <<not null>>
-    COLUMN(updated_at): TIMESTAMP <<not null>>
-}
+    coupon_usage {
+        uuid id PK
+        uuid coupon_id FK "not null"
+        uuid user_id FK "not null"
+        uuid order_id FK "not null"
+        decimal discount_amount "not null"
+        timestamp created_at "not null"
+    }
 
-' =============================================
-' COUPONS & DISCOUNTS
-' =============================================
+    %% ==========================================
+    %% USER INTERACTIONS
+    %% ==========================================
 
-TABLE(coupons) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(organizer_id): UUID
-    FOREIGN_KEY(event_id): UUID
-    COLUMN(code): VARCHAR(50) <<unique, not null>>
-    COLUMN(name): VARCHAR(100)
-    COLUMN(description): TEXT
-    COLUMN(discount_type): ENUM('percentage','fixed') <<not null>>
-    COLUMN(discount_value): DECIMAL(10,2) <<not null>>
-    COLUMN(max_discount): DECIMAL(10,2)
-    COLUMN(min_order_amount): DECIMAL(10,2)
-    COLUMN(max_uses): INT
-    COLUMN(max_uses_per_user): INT <<default 1>>
-    COLUMN(used_count): INT <<default 0>>
-    COLUMN(starts_at): TIMESTAMP
-    COLUMN(expires_at): TIMESTAMP
-    COLUMN(is_active): BOOLEAN <<default true>>
-    COLUMN(created_at): TIMESTAMP <<not null>>
-    COLUMN(updated_at): TIMESTAMP <<not null>>
-}
+    favorites {
+        uuid id PK
+        uuid user_id FK "not null"
+        uuid event_id FK "not null"
+        timestamp created_at "not null"
+    }
 
-TABLE(coupon_usage) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(coupon_id): UUID <<not null>>
-    FOREIGN_KEY(user_id): UUID <<not null>>
-    FOREIGN_KEY(order_id): UUID <<not null>>
-    COLUMN(discount_amount): DECIMAL(10,2) <<not null>>
-    COLUMN(created_at): TIMESTAMP <<not null>>
-}
+    event_views {
+        uuid id PK
+        uuid event_id FK "not null"
+        uuid user_id FK
+        varchar session_id
+        varchar ip_address
+        varchar referrer
+        timestamp created_at "not null"
+    }
 
-' =============================================
-' USER INTERACTIONS
-' =============================================
+    reviews {
+        uuid id PK
+        uuid event_id FK "not null"
+        uuid user_id FK "not null"
+        uuid registration_id FK "not null"
+        int rating "not null"
+        varchar title
+        text comment
+        boolean is_verified "default false"
+        boolean is_visible "default true"
+        text admin_response
+        timestamp created_at "not null"
+        timestamp updated_at "not null"
+    }
 
-TABLE(favorites) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(user_id): UUID <<not null>>
-    FOREIGN_KEY(event_id): UUID <<not null>>
-    COLUMN(created_at): TIMESTAMP <<not null>>
-}
+    %% ==========================================
+    %% NOTIFICATIONS
+    %% ==========================================
 
-TABLE(event_views) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(event_id): UUID <<not null>>
-    FOREIGN_KEY(user_id): UUID
-    COLUMN(session_id): VARCHAR(100)
-    COLUMN(ip_address): VARCHAR(45)
-    COLUMN(user_agent): TEXT
-    COLUMN(referrer): VARCHAR(500)
-    COLUMN(created_at): TIMESTAMP <<not null>>
-}
+    notifications {
+        uuid id PK
+        uuid user_id FK "not null"
+        varchar type "not null"
+        varchar title "not null"
+        varchar title_ar
+        text message "not null"
+        text message_ar
+        json data
+        varchar action_url
+        boolean is_read "default false"
+        timestamp read_at
+        timestamp created_at "not null"
+    }
 
-TABLE(reviews) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(event_id): UUID <<not null>>
-    FOREIGN_KEY(user_id): UUID <<not null>>
-    FOREIGN_KEY(registration_id): UUID <<not null>>
-    COLUMN(rating): INT <<not null>>
-    COLUMN(title): VARCHAR(255)
-    COLUMN(comment): TEXT
-    COLUMN(is_verified): BOOLEAN <<default false>>
-    COLUMN(is_visible): BOOLEAN <<default true>>
-    COLUMN(admin_response): TEXT
-    COLUMN(created_at): TIMESTAMP <<not null>>
-    COLUMN(updated_at): TIMESTAMP <<not null>>
-}
+    notification_preferences {
+        uuid id PK
+        uuid user_id FK UK "not null"
+        boolean email_new_events "default true"
+        boolean email_event_reminders "default true"
+        boolean email_promotions "default true"
+        boolean email_newsletter "default true"
+        boolean push_new_events "default true"
+        boolean push_event_reminders "default true"
+        boolean push_order_updates "default true"
+        boolean sms_event_reminders "default false"
+        timestamp created_at "not null"
+        timestamp updated_at "not null"
+    }
 
-' =============================================
-' NOTIFICATIONS
-' =============================================
+    %% ==========================================
+    %% ADMIN & SYSTEM
+    %% ==========================================
 
-TABLE(notifications) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(user_id): UUID <<not null>>
-    COLUMN(type): VARCHAR(50) <<not null>>
-    COLUMN(title): VARCHAR(255) <<not null>>
-    COLUMN(title_ar): VARCHAR(255)
-    COLUMN(message): TEXT <<not null>>
-    COLUMN(message_ar): TEXT
-    COLUMN(data): JSON
-    COLUMN(action_url): VARCHAR(500)
-    COLUMN(is_read): BOOLEAN <<default false>>
-    COLUMN(read_at): TIMESTAMP
-    COLUMN(created_at): TIMESTAMP <<not null>>
-}
+    admin_activity_logs {
+        uuid id PK
+        uuid admin_id FK "not null"
+        varchar action "not null"
+        varchar entity_type
+        uuid entity_id
+        json old_values
+        json new_values
+        varchar ip_address
+        timestamp created_at "not null"
+    }
 
-TABLE(notification_preferences) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(user_id): UUID <<unique, not null>>
-    COLUMN(email_new_events): BOOLEAN <<default true>>
-    COLUMN(email_event_reminders): BOOLEAN <<default true>>
-    COLUMN(email_promotions): BOOLEAN <<default true>>
-    COLUMN(email_newsletter): BOOLEAN <<default true>>
-    COLUMN(push_new_events): BOOLEAN <<default true>>
-    COLUMN(push_event_reminders): BOOLEAN <<default true>>
-    COLUMN(push_order_updates): BOOLEAN <<default true>>
-    COLUMN(sms_event_reminders): BOOLEAN <<default false>>
-    COLUMN(created_at): TIMESTAMP <<not null>>
-    COLUMN(updated_at): TIMESTAMP <<not null>>
-}
+    system_settings {
+        uuid id PK
+        varchar key UK "not null"
+        text value
+        varchar type "default string"
+        varchar group
+        text description
+        boolean is_public "default false"
+        uuid updated_by FK
+        timestamp created_at "not null"
+        timestamp updated_at "not null"
+    }
 
-' =============================================
-' ADMIN & SYSTEM
-' =============================================
+    payouts {
+        uuid id PK
+        uuid organizer_id FK "not null"
+        decimal amount "not null"
+        varchar currency "default SAR"
+        varchar bank_name
+        varchar bank_iban
+        varchar bank_account_name
+        enum status "pending|processing|completed|failed"
+        varchar reference_number
+        text notes
+        uuid processed_by FK
+        timestamp processed_at
+        timestamp created_at "not null"
+        timestamp updated_at "not null"
+    }
 
-TABLE(admin_activity_logs) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(admin_id): UUID <<not null>>
-    COLUMN(action): VARCHAR(100) <<not null>>
-    COLUMN(entity_type): VARCHAR(50)
-    COLUMN(entity_id): UUID
-    COLUMN(old_values): JSON
-    COLUMN(new_values): JSON
-    COLUMN(ip_address): VARCHAR(45)
-    COLUMN(user_agent): TEXT
-    COLUMN(created_at): TIMESTAMP <<not null>>
-}
+    %% ==========================================
+    %% RELATIONSHIPS
+    %% ==========================================
 
-TABLE(system_settings) {
-    PRIMARY_KEY(id): UUID
-    --
-    COLUMN(key): VARCHAR(100) <<unique, not null>>
-    COLUMN(value): TEXT
-    COLUMN(type): VARCHAR(20) <<default 'string'>>
-    COLUMN(group): VARCHAR(50)
-    COLUMN(description): TEXT
-    COLUMN(is_public): BOOLEAN <<default false>>
-    COLUMN(updated_by): UUID
-    COLUMN(created_at): TIMESTAMP <<not null>>
-    COLUMN(updated_at): TIMESTAMP <<not null>>
-}
+    users ||--o{ user_sessions : "has"
+    users ||--o{ password_resets : "has"
+    users ||--o| organizers : "can be"
+    users ||--o{ organizer_applications : "submits"
+    users ||--o{ orders : "places"
+    users ||--o{ tickets : "owns"
+    users ||--o{ registrations : "makes"
+    users ||--o{ favorites : "has"
+    users ||--o{ reviews : "writes"
+    users ||--o{ notifications : "receives"
+    users ||--o| notification_preferences : "has"
 
-TABLE(payouts) {
-    PRIMARY_KEY(id): UUID
-    --
-    FOREIGN_KEY(organizer_id): UUID <<not null>>
-    COLUMN(amount): DECIMAL(12,2) <<not null>>
-    COLUMN(currency): VARCHAR(3) <<default 'SAR'>>
-    COLUMN(bank_name): VARCHAR(100)
-    COLUMN(bank_iban): VARCHAR(34)
-    COLUMN(bank_account_name): VARCHAR(255)
-    COLUMN(status): ENUM('pending','processing','completed','failed') <<default 'pending'>>
-    COLUMN(reference_number): VARCHAR(100)
-    COLUMN(notes): TEXT
-    COLUMN(processed_by): UUID
-    COLUMN(processed_at): TIMESTAMP
-    COLUMN(created_at): TIMESTAMP <<not null>>
-    COLUMN(updated_at): TIMESTAMP <<not null>>
-}
+    organizers ||--o{ events : "creates"
+    organizers ||--o{ organizer_documents : "has"
+    organizers ||--o{ venues : "owns"
+    organizers ||--o{ coupons : "creates"
+    organizers ||--o{ payouts : "receives"
 
-' =============================================
-' RELATIONSHIPS
-' =============================================
+    regions ||--o{ cities : "contains"
+    cities ||--o{ venues : "has"
+    cities ||--o{ events : "hosts"
 
-' User relationships
-users ||--o{ user_sessions : "has"
-users ||--o{ password_resets : "has"
-users ||--o| organizers : "can be"
-users ||--o{ organizer_applications : "submits"
-users ||--o{ orders : "places"
-users ||--o{ tickets : "owns"
-users ||--o{ registrations : "makes"
-users ||--o{ favorites : "has"
-users ||--o{ reviews : "writes"
-users ||--o{ notifications : "receives"
-users ||--o| notification_preferences : "has"
+    venues ||--o{ venue_images : "has"
+    venues ||--o{ venue_amenities : "has"
+    venues ||--o{ events : "hosts"
 
-' Organizer relationships
-organizers ||--o{ events : "creates"
-organizers ||--o{ organizer_documents : "has"
-organizers ||--o{ venues : "owns"
-organizers ||--o{ coupons : "creates"
-organizers ||--o{ payouts : "receives"
+    event_types ||--o{ events : "categorizes"
+    event_tags ||--o{ event_tag_mapping : "used in"
 
-' Geographic relationships
-regions ||--o{ cities : "contains"
-cities ||--o{ venues : "has"
-cities ||--o{ events : "hosts"
+    events ||--o{ event_images : "has"
+    events ||--o{ event_attachments : "has"
+    events ||--o{ event_tag_mapping : "has"
+    events ||--o{ ticket_tiers : "offers"
+    events ||--o{ orders : "generates"
+    events ||--o{ registrations : "has"
+    events ||--o{ favorites : "favorited by"
+    events ||--o{ event_views : "has"
+    events ||--o{ reviews : "receives"
+    events ||--o{ coupons : "has"
 
-' Venue relationships
-venues ||--o{ venue_images : "has"
-venues ||--o{ venue_amenities : "has"
-venues ||--o{ events : "hosts"
+    ticket_tiers ||--o{ ticket_tier_benefits : "has"
+    ticket_tiers ||--o{ tickets : "generates"
+    ticket_tiers ||--o{ order_items : "ordered as"
 
-' Event relationships
-events ||--o{ event_images : "has"
-events ||--o{ event_attachments : "has"
-events ||--o{ event_tag_mapping : "has"
-events ||--o{ ticket_tiers : "offers"
-events ||--o{ orders : "generates"
-events ||--o{ registrations : "has"
-events ||--o{ favorites : "favorited by"
-events ||--o{ event_views : "has"
-events ||--o{ reviews : "receives"
-events ||--o{ coupons : "has"
-event_types ||--o{ events : "categorizes"
-event_tags ||--o{ event_tag_mapping : "used in"
+    orders ||--o{ order_items : "contains"
+    orders ||--o{ payments : "has"
+    orders ||--o{ tickets : "generates"
+    orders ||--o{ refunds : "may have"
+    orders ||--o| registrations : "creates"
+    orders ||--o{ coupon_usage : "may use"
 
-' Ticket relationships
-ticket_tiers ||--o{ ticket_tier_benefits : "has"
-ticket_tiers ||--o{ tickets : "generates"
-ticket_tiers ||--o{ order_items : "ordered as"
-
-' Order relationships
-orders ||--o{ order_items : "contains"
-orders ||--o{ payments : "has"
-orders ||--o{ tickets : "generates"
-orders ||--o{ refunds : "may have"
-orders ||--o| registrations : "creates"
-orders ||--o{ coupon_usage : "may use"
-
-' Coupon relationships
-coupons ||--o{ coupon_usage : "tracked by"
-
-@enduml
+    coupons ||--o{ coupon_usage : "tracked by"
 ```
 
-## Database Tables Summary
+---
+
+## 📊 Database Tables Summary
 
 ### Core Tables (28 tables)
 
 | Category | Tables | Description |
 |----------|--------|-------------|
-| **Users & Auth** | `users`, `user_sessions`, `password_resets` | User management and authentication |
-| **Organizers** | `organizers`, `organizer_applications`, `organizer_documents` | Event organizer management |
-| **Geographic** | `regions`, `cities`, `venues`, `venue_images`, `venue_amenities` | Location and venue management |
-| **Event Types** | `event_types`, `event_tags` | Event categorization |
-| **Events** | `events`, `event_images`, `event_attachments`, `event_tag_mapping` | Core event data |
-| **Tickets** | `ticket_tiers`, `ticket_tier_benefits`, `tickets` | Ticketing system |
-| **Orders** | `orders`, `order_items`, `payments`, `refunds` | Order and payment processing |
-| **Registrations** | `registrations` | Event registrations |
-| **Coupons** | `coupons`, `coupon_usage` | Discount and promotion system |
-| **User Interactions** | `favorites`, `event_views`, `reviews` | User engagement tracking |
-| **Notifications** | `notifications`, `notification_preferences` | Notification system |
-| **Admin** | `admin_activity_logs`, `system_settings`, `payouts` | System administration |
+| **👤 Users & Auth** | `users`, `user_sessions`, `password_resets` | User management and authentication |
+| **🏢 Organizers** | `organizers`, `organizer_applications`, `organizer_documents` | Event organizer management |
+| **📍 Geographic** | `regions`, `cities`, `venues`, `venue_images`, `venue_amenities` | Location and venue management |
+| **🏷️ Event Types** | `event_types`, `event_tags` | Event categorization |
+| **🎉 Events** | `events`, `event_images`, `event_attachments`, `event_tag_mapping` | Core event data |
+| **🎫 Tickets** | `ticket_tiers`, `ticket_tier_benefits`, `tickets` | Ticketing system |
+| **🛒 Orders** | `orders`, `order_items`, `payments`, `refunds` | Order and payment processing |
+| **📝 Registrations** | `registrations` | Event registrations |
+| **🎁 Coupons** | `coupons`, `coupon_usage` | Discount and promotion system |
+| **❤️ User Interactions** | `favorites`, `event_views`, `reviews` | User engagement tracking |
+| **🔔 Notifications** | `notifications`, `notification_preferences` | Notification system |
+| **⚙️ Admin** | `admin_activity_logs`, `system_settings`, `payouts` | System administration |
 
-## Key Indexes Recommendations
+---
+
+## 🔑 Key Indexes
 
 ```sql
 -- Users
@@ -776,15 +706,42 @@ CREATE INDEX idx_orders_number ON orders(order_number);
 CREATE INDEX idx_registrations_event ON registrations(event_id);
 CREATE INDEX idx_registrations_user ON registrations(user_id);
 
--- Favorites
+-- Favorites (Unique constraint)
 CREATE UNIQUE INDEX idx_favorites_user_event ON favorites(user_id, event_id);
 ```
 
-## Notes
+---
 
-- All tables use **UUID** as primary keys for better security and distributed systems support
-- **Soft deletes** implemented via `deleted_at` column where applicable
-- **Audit columns** (`created_at`, `updated_at`) on all tables
-- **Arabic support** with `_ar` suffix columns for bilingual content
-- **JSON columns** for flexible data storage (gateway responses, metadata)
-- **ENUM types** for status fields to ensure data integrity
+## 📋 Data Types Reference
+
+| Type | Usage |
+|------|-------|
+| `UUID` | Primary keys, foreign keys |
+| `VARCHAR(n)` | Short text fields |
+| `TEXT` | Long text content |
+| `DECIMAL(p,s)` | Money, ratings, coordinates |
+| `INT` | Counts, quantities |
+| `BOOLEAN` | Flags, toggles |
+| `TIMESTAMP` | Dates, times |
+| `JSON` | Flexible structured data |
+| `ENUM` | Status fields, fixed options |
+
+---
+
+## 🔒 Security Notes
+
+- **Passwords**: Stored as bcrypt hashes, never plain text
+- **Tokens**: Session tokens use secure random generation
+- **UUIDs**: Used for all IDs to prevent enumeration attacks
+- **Soft Deletes**: `deleted_at` column preserves data integrity
+- **Audit Trail**: `admin_activity_logs` tracks all admin actions
+
+---
+
+## 🌍 Internationalization
+
+All user-facing text fields have Arabic counterparts:
+- `name` / `name_ar`
+- `description` / `description_ar`
+- `title` / `title_ar`
+- `message` / `message_ar`
