@@ -6,669 +6,566 @@
 
 ```mermaid
 erDiagram
-    %% ==========================================
-    %% USERS & AUTHENTICATION
-    %% ==========================================
-    
-    users {
+    USERS {
         uuid id PK
-        varchar email UK "not null"
-        varchar password_hash "not null"
-        varchar name "not null"
-        varchar phone
-        varchar avatar_url
-        enum role "admin|organizer|user"
-        boolean is_verified "default false"
-        boolean is_active "default true"
-        timestamp email_verified_at
-        timestamp last_login_at
-        timestamp created_at "not null"
-        timestamp updated_at "not null"
+        string email
+        string password_hash
+        string name
+        string phone
+        string avatar_url
+        string role
+        boolean is_verified
+        boolean is_active
+        datetime created_at
+        datetime updated_at
     }
 
-    user_sessions {
+    USER_SESSIONS {
         uuid id PK
-        uuid user_id FK "not null"
-        varchar token UK "not null"
-        json device_info
-        varchar ip_address
-        timestamp expires_at "not null"
-        timestamp created_at "not null"
+        uuid user_id FK
+        string token
+        string device_info
+        string ip_address
+        datetime expires_at
+        datetime created_at
     }
 
-    password_resets {
+    ORGANIZERS {
         uuid id PK
-        uuid user_id FK "not null"
-        varchar token UK "not null"
-        timestamp expires_at "not null"
-        timestamp used_at
-        timestamp created_at "not null"
+        uuid user_id FK
+        string company_name
+        string company_name_ar
+        string email
+        string phone
+        string logo_url
+        string description
+        string website
+        boolean is_verified
+        decimal rating
+        int total_events
+        decimal total_revenue
+        string status
+        datetime created_at
+        datetime updated_at
     }
 
-    %% ==========================================
-    %% ORGANIZERS
-    %% ==========================================
-
-    organizers {
+    ORGANIZER_DOCUMENTS {
         uuid id PK
-        uuid user_id FK UK "not null"
-        varchar company_name "not null"
-        varchar company_name_ar
-        varchar email "not null"
-        varchar phone
-        varchar logo_url
-        text description
-        text description_ar
-        varchar website
-        varchar twitter
-        varchar instagram
-        varchar commercial_register
-        varchar tax_number
-        varchar bank_name
-        varchar bank_iban
-        boolean is_verified "default false"
-        decimal rating "default 0"
-        int total_events "default 0"
-        int total_attendees "default 0"
-        decimal total_revenue "default 0"
-        decimal commission_rate "default 10"
-        enum status "pending|active|suspended"
-        timestamp created_at "not null"
-        timestamp updated_at "not null"
-    }
-
-    organizer_applications {
-        uuid id PK
-        uuid user_id FK "not null"
-        varchar company_name "not null"
-        text description
-        varchar commercial_register
-        enum status "pending|approved|rejected"
-        text admin_notes
-        uuid reviewed_by FK
-        timestamp reviewed_at
-        timestamp submitted_at "not null"
-        timestamp created_at "not null"
-    }
-
-    organizer_documents {
-        uuid id PK
-        uuid organizer_id FK "not null"
-        uuid application_id FK
-        varchar name "not null"
-        varchar file_url "not null"
-        varchar file_type
-        int file_size
-        enum document_type "license|id|commercial|other"
-        timestamp created_at "not null"
-    }
-
-    %% ==========================================
-    %% GEOGRAPHIC & LOCATION
-    %% ==========================================
-
-    regions {
-        uuid id PK
-        varchar name "not null"
-        varchar name_ar "not null"
-        varchar code UK
-        boolean is_active "default true"
-        timestamp created_at "not null"
-    }
-
-    cities {
-        uuid id PK
-        uuid region_id FK "not null"
-        varchar name "not null"
-        varchar name_ar "not null"
-        varchar code UK
-        decimal latitude
-        decimal longitude
-        varchar timezone "default Asia/Riyadh"
-        boolean is_active "default true"
-        int sort_order "default 0"
-        timestamp created_at "not null"
-    }
-
-    venues {
-        uuid id PK
-        uuid city_id FK "not null"
         uuid organizer_id FK
-        varchar name "not null"
-        varchar name_ar "not null"
-        text description
-        varchar address "not null"
+        string name
+        string file_url
+        string file_type
+        int file_size
+        string document_type
+        datetime created_at
+    }
+
+    REGIONS {
+        uuid id PK
+        string name
+        string name_ar
+        string code
+        boolean is_active
+        datetime created_at
+    }
+
+    CITIES {
+        uuid id PK
+        uuid region_id FK
+        string name
+        string name_ar
+        string code
         decimal latitude
         decimal longitude
-        int capacity "not null"
-        varchar contact_phone
-        varchar contact_email
-        varchar website
-        varchar google_maps_url
-        boolean is_verified "default false"
-        boolean is_active "default true"
-        timestamp created_at "not null"
-        timestamp updated_at "not null"
+        string timezone
+        boolean is_active
+        int sort_order
+        datetime created_at
     }
 
-    venue_images {
+    VENUES {
         uuid id PK
-        uuid venue_id FK "not null"
-        varchar image_url "not null"
-        varchar alt_text
-        boolean is_primary "default false"
-        int sort_order "default 0"
-        timestamp created_at "not null"
+        uuid city_id FK
+        uuid organizer_id FK
+        string name
+        string name_ar
+        string description
+        string address
+        decimal latitude
+        decimal longitude
+        int capacity
+        string contact_phone
+        string contact_email
+        boolean is_verified
+        boolean is_active
+        datetime created_at
+        datetime updated_at
     }
 
-    venue_amenities {
+    VENUE_IMAGES {
         uuid id PK
-        uuid venue_id FK "not null"
-        varchar name "not null"
-        varchar name_ar
-        varchar icon
-        timestamp created_at "not null"
-    }
-
-    %% ==========================================
-    %% EVENT TYPES & CATEGORIES
-    %% ==========================================
-
-    event_types {
-        uuid id PK
-        varchar name "not null"
-        varchar name_ar "not null"
-        varchar slug UK "not null"
-        text description
-        varchar icon
-        varchar color
-        boolean is_active "default true"
-        int sort_order "default 0"
-        timestamp created_at "not null"
-        timestamp updated_at "not null"
-    }
-
-    event_tags {
-        uuid id PK
-        varchar name "not null"
-        varchar name_ar
-        varchar slug UK "not null"
-        timestamp created_at "not null"
-    }
-
-    %% ==========================================
-    %% EVENTS
-    %% ==========================================
-
-    events {
-        uuid id PK
-        uuid organizer_id FK "not null"
-        uuid type_id FK "not null"
         uuid venue_id FK
-        uuid city_id FK "not null"
-        varchar title "not null"
-        varchar title_ar
-        varchar slug UK "not null"
-        text description "not null"
-        text short_description
-        varchar cover_image_url
-        varchar address
+        string image_url
+        string alt_text
+        boolean is_primary
+        int sort_order
+        datetime created_at
+    }
+
+    VENUE_AMENITIES {
+        uuid id PK
+        uuid venue_id FK
+        string name
+        string name_ar
+        string icon
+        datetime created_at
+    }
+
+    EVENT_TYPES {
+        uuid id PK
+        string name
+        string name_ar
+        string slug
+        string description
+        string icon
+        string color
+        boolean is_active
+        int sort_order
+        datetime created_at
+        datetime updated_at
+    }
+
+    EVENT_TAGS {
+        uuid id PK
+        string name
+        string name_ar
+        string slug
+        datetime created_at
+    }
+
+    EVENTS {
+        uuid id PK
+        uuid organizer_id FK
+        uuid type_id FK
+        uuid venue_id FK
+        uuid city_id FK
+        string title
+        string title_ar
+        string slug
+        text description
+        string short_description
+        string cover_image_url
+        string address
         decimal latitude
         decimal longitude
-        timestamp date_start "not null"
-        timestamp date_end "not null"
-        timestamp registration_start
-        timestamp registration_end
+        datetime date_start
+        datetime date_end
+        datetime registration_start
+        datetime registration_end
         int max_attendees
-        int current_attendees "default 0"
-        boolean is_paid "default false"
-        decimal min_price "default 0"
-        decimal max_price "default 0"
+        int current_attendees
+        boolean is_paid
+        decimal min_price
+        decimal max_price
         text terms_and_conditions
         text refund_policy
-        enum status "draft|pending|published|closed|completed|cancelled"
-        boolean is_featured "default false"
-        timestamp featured_until
-        int views_count "default 0"
-        int likes_count "default 0"
-        timestamp published_at
-        timestamp cancelled_at
-        text cancellation_reason
-        uuid approved_by FK
-        timestamp approved_at
-        timestamp created_at "not null"
-        timestamp updated_at "not null"
-        timestamp deleted_at
+        string status
+        boolean is_featured
+        int views_count
+        int likes_count
+        datetime published_at
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
     }
 
-    event_images {
+    EVENT_IMAGES {
         uuid id PK
-        uuid event_id FK "not null"
-        varchar image_url "not null"
-        varchar thumbnail_url
-        varchar alt_text
-        boolean is_cover "default false"
-        int sort_order "default 0"
-        timestamp created_at "not null"
+        uuid event_id FK
+        string image_url
+        string thumbnail_url
+        string alt_text
+        boolean is_cover
+        int sort_order
+        datetime created_at
     }
 
-    event_attachments {
+    EVENT_ATTACHMENTS {
         uuid id PK
-        uuid event_id FK "not null"
-        varchar name "not null"
-        varchar file_url "not null"
-        enum file_type "pdf|image|document|other"
+        uuid event_id FK
+        string name
+        string file_url
+        string file_type
         int file_size
-        boolean is_public "default true"
-        int download_count "default 0"
-        timestamp created_at "not null"
+        boolean is_public
+        int download_count
+        datetime created_at
     }
 
-    event_tag_mapping {
+    EVENT_TAG_MAPPING {
         uuid id PK
-        uuid event_id FK "not null"
-        uuid tag_id FK "not null"
-        timestamp created_at "not null"
+        uuid event_id FK
+        uuid tag_id FK
+        datetime created_at
     }
 
-    %% ==========================================
-    %% TICKETS
-    %% ==========================================
-
-    ticket_tiers {
+    TICKET_TIERS {
         uuid id PK
-        uuid event_id FK "not null"
-        varchar name "not null"
-        varchar name_ar
-        enum type "vip|standard|free"
+        uuid event_id FK
+        string name
+        string name_ar
+        string type
         text description
-        decimal price "not null"
+        decimal price
         decimal original_price
-        int quantity "not null"
-        int sold "default 0"
-        int reserved "default 0"
-        int max_per_order "default 10"
-        int min_per_order "default 1"
-        timestamp sale_start
-        timestamp sale_end
-        boolean is_active "default true"
-        int sort_order "default 0"
-        timestamp created_at "not null"
-        timestamp updated_at "not null"
+        int quantity
+        int sold
+        int reserved
+        int max_per_order
+        int min_per_order
+        datetime sale_start
+        datetime sale_end
+        boolean is_active
+        int sort_order
+        datetime created_at
+        datetime updated_at
     }
 
-    ticket_tier_benefits {
+    TICKET_TIER_BENEFITS {
         uuid id PK
-        uuid tier_id FK "not null"
-        varchar benefit "not null"
-        varchar benefit_ar
-        varchar icon
-        int sort_order "default 0"
-        timestamp created_at "not null"
+        uuid tier_id FK
+        string benefit
+        string benefit_ar
+        string icon
+        int sort_order
+        datetime created_at
     }
 
-    tickets {
+    TICKETS {
         uuid id PK
-        uuid event_id FK "not null"
-        uuid tier_id FK "not null"
-        uuid user_id FK "not null"
-        uuid registration_id FK "not null"
-        uuid order_id FK "not null"
-        varchar ticket_number UK "not null"
-        varchar qr_code UK "not null"
-        varchar barcode
-        varchar attendee_name
-        varchar attendee_email
-        varchar attendee_phone
-        varchar seat_number
-        varchar seat_section
-        decimal price "not null"
-        decimal discount_amount "default 0"
-        enum status "active|used|cancelled|expired|refunded"
-        timestamp checked_in_at
-        uuid checked_in_by FK
-        timestamp cancelled_at
-        timestamp refunded_at
-        decimal refund_amount
-        text notes
-        timestamp created_at "not null"
-        timestamp updated_at "not null"
-    }
-
-    %% ==========================================
-    %% ORDERS & PAYMENTS
-    %% ==========================================
-
-    orders {
-        uuid id PK
-        uuid user_id FK "not null"
-        uuid event_id FK "not null"
-        varchar order_number UK "not null"
-        decimal subtotal "not null"
-        decimal discount_amount "default 0"
-        decimal service_fee "default 0"
-        decimal tax_amount "default 0"
-        decimal total_amount "not null"
-        varchar currency "default SAR"
-        enum status "pending|processing|completed|cancelled|refunded"
-        enum payment_status "pending|paid|failed|refunded"
-        varchar payment_method
-        varchar payment_gateway
-        varchar gateway_transaction_id
-        json gateway_response
-        varchar billing_name
-        varchar billing_email
-        varchar billing_phone
-        varchar coupon_code
-        varchar ip_address
-        text notes
-        timestamp paid_at
-        timestamp cancelled_at
-        timestamp refunded_at
-        timestamp expires_at
-        timestamp created_at "not null"
-        timestamp updated_at "not null"
-    }
-
-    order_items {
-        uuid id PK
-        uuid order_id FK "not null"
-        uuid tier_id FK "not null"
-        int quantity "not null"
-        decimal unit_price "not null"
-        decimal total_price "not null"
-        decimal discount_amount "default 0"
-        timestamp created_at "not null"
-    }
-
-    payments {
-        uuid id PK
-        uuid order_id FK "not null"
-        uuid user_id FK "not null"
-        decimal amount "not null"
-        varchar currency "default SAR"
-        varchar payment_method "not null"
-        varchar gateway "not null"
-        varchar gateway_transaction_id
-        json gateway_response
-        varchar card_last_four
-        varchar card_brand
-        enum status "pending|processing|completed|failed|refunded"
-        text failure_reason
-        varchar refund_id
-        decimal refund_amount
-        timestamp refunded_at
-        timestamp created_at "not null"
-        timestamp updated_at "not null"
-    }
-
-    refunds {
-        uuid id PK
-        uuid order_id FK "not null"
-        uuid payment_id FK "not null"
-        uuid user_id FK "not null"
-        uuid processed_by FK
-        decimal amount "not null"
-        text reason
-        enum status "pending|approved|rejected|processed"
-        varchar gateway_refund_id
-        text admin_notes
-        timestamp processed_at
-        timestamp created_at "not null"
-        timestamp updated_at "not null"
-    }
-
-    %% ==========================================
-    %% REGISTRATIONS
-    %% ==========================================
-
-    registrations {
-        uuid id PK
-        uuid event_id FK "not null"
-        uuid user_id FK "not null"
+        uuid event_id FK
+        uuid tier_id FK
+        uuid user_id FK
+        uuid registration_id FK
         uuid order_id FK
-        varchar registration_number UK "not null"
-        int attendee_count "default 1"
-        decimal total_amount "not null"
-        enum status "pending|confirmed|cancelled|attended|no_show"
-        enum payment_status "pending|completed|failed|refunded"
-        enum check_in_status "not_checked|checked_in|checked_out"
-        timestamp checked_in_at
-        timestamp checked_out_at
-        varchar source "default web"
+        string ticket_number
+        string qr_code
+        string barcode
+        string attendee_name
+        string attendee_email
+        string attendee_phone
+        string seat_number
+        string seat_section
+        decimal price
+        decimal discount_amount
+        string status
+        datetime checked_in_at
+        uuid checked_in_by
+        datetime cancelled_at
+        datetime refunded_at
+        decimal refund_amount
         text notes
-        timestamp created_at "not null"
-        timestamp updated_at "not null"
+        datetime created_at
+        datetime updated_at
     }
 
-    %% ==========================================
-    %% COUPONS & DISCOUNTS
-    %% ==========================================
+    ORDERS {
+        uuid id PK
+        uuid user_id FK
+        uuid event_id FK
+        string order_number
+        decimal subtotal
+        decimal discount_amount
+        decimal service_fee
+        decimal tax_amount
+        decimal total_amount
+        string currency
+        string status
+        string payment_status
+        string payment_method
+        string payment_gateway
+        string gateway_transaction_id
+        string billing_name
+        string billing_email
+        string billing_phone
+        string coupon_code
+        string ip_address
+        text notes
+        datetime paid_at
+        datetime cancelled_at
+        datetime refunded_at
+        datetime expires_at
+        datetime created_at
+        datetime updated_at
+    }
 
-    coupons {
+    ORDER_ITEMS {
+        uuid id PK
+        uuid order_id FK
+        uuid tier_id FK
+        int quantity
+        decimal unit_price
+        decimal total_price
+        decimal discount_amount
+        datetime created_at
+    }
+
+    PAYMENTS {
+        uuid id PK
+        uuid order_id FK
+        uuid user_id FK
+        decimal amount
+        string currency
+        string payment_method
+        string gateway
+        string gateway_transaction_id
+        string card_last_four
+        string card_brand
+        string status
+        text failure_reason
+        string refund_id
+        decimal refund_amount
+        datetime refunded_at
+        datetime created_at
+        datetime updated_at
+    }
+
+    REFUNDS {
+        uuid id PK
+        uuid order_id FK
+        uuid payment_id FK
+        uuid user_id FK
+        uuid processed_by FK
+        decimal amount
+        text reason
+        string status
+        string gateway_refund_id
+        text admin_notes
+        datetime processed_at
+        datetime created_at
+        datetime updated_at
+    }
+
+    REGISTRATIONS {
+        uuid id PK
+        uuid event_id FK
+        uuid user_id FK
+        uuid order_id FK
+        string registration_number
+        int attendee_count
+        decimal total_amount
+        string status
+        string payment_status
+        string check_in_status
+        datetime checked_in_at
+        datetime checked_out_at
+        string source
+        text notes
+        datetime created_at
+        datetime updated_at
+    }
+
+    COUPONS {
         uuid id PK
         uuid organizer_id FK
         uuid event_id FK
-        varchar code UK "not null"
-        varchar name
+        string code
+        string name
         text description
-        enum discount_type "percentage|fixed"
-        decimal discount_value "not null"
+        string discount_type
+        decimal discount_value
         decimal max_discount
         decimal min_order_amount
         int max_uses
-        int max_uses_per_user "default 1"
-        int used_count "default 0"
-        timestamp starts_at
-        timestamp expires_at
-        boolean is_active "default true"
-        timestamp created_at "not null"
-        timestamp updated_at "not null"
+        int max_uses_per_user
+        int used_count
+        datetime starts_at
+        datetime expires_at
+        boolean is_active
+        datetime created_at
+        datetime updated_at
     }
 
-    coupon_usage {
+    COUPON_USAGE {
         uuid id PK
-        uuid coupon_id FK "not null"
-        uuid user_id FK "not null"
-        uuid order_id FK "not null"
-        decimal discount_amount "not null"
-        timestamp created_at "not null"
-    }
-
-    %% ==========================================
-    %% USER INTERACTIONS
-    %% ==========================================
-
-    favorites {
-        uuid id PK
-        uuid user_id FK "not null"
-        uuid event_id FK "not null"
-        timestamp created_at "not null"
-    }
-
-    event_views {
-        uuid id PK
-        uuid event_id FK "not null"
+        uuid coupon_id FK
         uuid user_id FK
-        varchar session_id
-        varchar ip_address
-        varchar referrer
-        timestamp created_at "not null"
+        uuid order_id FK
+        decimal discount_amount
+        datetime created_at
     }
 
-    reviews {
+    FAVORITES {
         uuid id PK
-        uuid event_id FK "not null"
-        uuid user_id FK "not null"
-        uuid registration_id FK "not null"
-        int rating "not null"
-        varchar title
+        uuid user_id FK
+        uuid event_id FK
+        datetime created_at
+    }
+
+    EVENT_VIEWS {
+        uuid id PK
+        uuid event_id FK
+        uuid user_id FK
+        string session_id
+        string ip_address
+        string referrer
+        datetime created_at
+    }
+
+    REVIEWS {
+        uuid id PK
+        uuid event_id FK
+        uuid user_id FK
+        uuid registration_id FK
+        int rating
+        string title
         text comment
-        boolean is_verified "default false"
-        boolean is_visible "default true"
+        boolean is_verified
+        boolean is_visible
         text admin_response
-        timestamp created_at "not null"
-        timestamp updated_at "not null"
+        datetime created_at
+        datetime updated_at
     }
 
-    %% ==========================================
-    %% NOTIFICATIONS
-    %% ==========================================
-
-    notifications {
+    NOTIFICATIONS {
         uuid id PK
-        uuid user_id FK "not null"
-        varchar type "not null"
-        varchar title "not null"
-        varchar title_ar
-        text message "not null"
+        uuid user_id FK
+        string type
+        string title
+        string title_ar
+        text message
         text message_ar
-        json data
-        varchar action_url
-        boolean is_read "default false"
-        timestamp read_at
-        timestamp created_at "not null"
+        string action_url
+        boolean is_read
+        datetime read_at
+        datetime created_at
     }
 
-    notification_preferences {
+    NOTIFICATION_PREFERENCES {
         uuid id PK
-        uuid user_id FK UK "not null"
-        boolean email_new_events "default true"
-        boolean email_event_reminders "default true"
-        boolean email_promotions "default true"
-        boolean email_newsletter "default true"
-        boolean push_new_events "default true"
-        boolean push_event_reminders "default true"
-        boolean push_order_updates "default true"
-        boolean sms_event_reminders "default false"
-        timestamp created_at "not null"
-        timestamp updated_at "not null"
+        uuid user_id FK
+        boolean email_new_events
+        boolean email_event_reminders
+        boolean email_promotions
+        boolean email_newsletter
+        boolean push_new_events
+        boolean push_event_reminders
+        boolean push_order_updates
+        boolean sms_event_reminders
+        datetime created_at
+        datetime updated_at
     }
 
-    %% ==========================================
-    %% ADMIN & SYSTEM
-    %% ==========================================
-
-    admin_activity_logs {
+    ADMIN_ACTIVITY_LOGS {
         uuid id PK
-        uuid admin_id FK "not null"
-        varchar action "not null"
-        varchar entity_type
+        uuid admin_id FK
+        string action
+        string entity_type
         uuid entity_id
-        json old_values
-        json new_values
-        varchar ip_address
-        timestamp created_at "not null"
+        string ip_address
+        datetime created_at
     }
 
-    system_settings {
+    SYSTEM_SETTINGS {
         uuid id PK
-        varchar key UK "not null"
+        string key
         text value
-        varchar type "default string"
-        varchar group
+        string type
+        string group_name
         text description
-        boolean is_public "default false"
+        boolean is_public
         uuid updated_by FK
-        timestamp created_at "not null"
-        timestamp updated_at "not null"
+        datetime created_at
+        datetime updated_at
     }
 
-    payouts {
+    PAYOUTS {
         uuid id PK
-        uuid organizer_id FK "not null"
-        decimal amount "not null"
-        varchar currency "default SAR"
-        varchar bank_name
-        varchar bank_iban
-        varchar bank_account_name
-        enum status "pending|processing|completed|failed"
-        varchar reference_number
+        uuid organizer_id FK
+        decimal amount
+        string currency
+        string bank_name
+        string bank_iban
+        string bank_account_name
+        string status
+        string reference_number
         text notes
         uuid processed_by FK
-        timestamp processed_at
-        timestamp created_at "not null"
-        timestamp updated_at "not null"
+        datetime processed_at
+        datetime created_at
+        datetime updated_at
     }
 
-    %% ==========================================
-    %% RELATIONSHIPS
-    %% ==========================================
+    USERS ||--o{ USER_SESSIONS : has
+    USERS ||--o| ORGANIZERS : becomes
+    USERS ||--o{ ORDERS : places
+    USERS ||--o{ TICKETS : owns
+    USERS ||--o{ REGISTRATIONS : makes
+    USERS ||--o{ FAVORITES : has
+    USERS ||--o{ REVIEWS : writes
+    USERS ||--o{ NOTIFICATIONS : receives
+    USERS ||--o| NOTIFICATION_PREFERENCES : has
 
-    users ||--o{ user_sessions : "has"
-    users ||--o{ password_resets : "has"
-    users ||--o| organizers : "can be"
-    users ||--o{ organizer_applications : "submits"
-    users ||--o{ orders : "places"
-    users ||--o{ tickets : "owns"
-    users ||--o{ registrations : "makes"
-    users ||--o{ favorites : "has"
-    users ||--o{ reviews : "writes"
-    users ||--o{ notifications : "receives"
-    users ||--o| notification_preferences : "has"
+    ORGANIZERS ||--o{ EVENTS : creates
+    ORGANIZERS ||--o{ ORGANIZER_DOCUMENTS : has
+    ORGANIZERS ||--o{ VENUES : owns
+    ORGANIZERS ||--o{ COUPONS : creates
+    ORGANIZERS ||--o{ PAYOUTS : receives
 
-    organizers ||--o{ events : "creates"
-    organizers ||--o{ organizer_documents : "has"
-    organizers ||--o{ venues : "owns"
-    organizers ||--o{ coupons : "creates"
-    organizers ||--o{ payouts : "receives"
+    REGIONS ||--o{ CITIES : contains
+    CITIES ||--o{ VENUES : has
+    CITIES ||--o{ EVENTS : hosts
 
-    regions ||--o{ cities : "contains"
-    cities ||--o{ venues : "has"
-    cities ||--o{ events : "hosts"
+    VENUES ||--o{ VENUE_IMAGES : has
+    VENUES ||--o{ VENUE_AMENITIES : has
+    VENUES ||--o{ EVENTS : hosts
 
-    venues ||--o{ venue_images : "has"
-    venues ||--o{ venue_amenities : "has"
-    venues ||--o{ events : "hosts"
+    EVENT_TYPES ||--o{ EVENTS : categorizes
+    EVENT_TAGS ||--o{ EVENT_TAG_MAPPING : has
 
-    event_types ||--o{ events : "categorizes"
-    event_tags ||--o{ event_tag_mapping : "used in"
+    EVENTS ||--o{ EVENT_IMAGES : has
+    EVENTS ||--o{ EVENT_ATTACHMENTS : has
+    EVENTS ||--o{ EVENT_TAG_MAPPING : has
+    EVENTS ||--o{ TICKET_TIERS : offers
+    EVENTS ||--o{ ORDERS : generates
+    EVENTS ||--o{ REGISTRATIONS : has
+    EVENTS ||--o{ FAVORITES : receives
+    EVENTS ||--o{ EVENT_VIEWS : has
+    EVENTS ||--o{ REVIEWS : receives
+    EVENTS ||--o{ COUPONS : has
 
-    events ||--o{ event_images : "has"
-    events ||--o{ event_attachments : "has"
-    events ||--o{ event_tag_mapping : "has"
-    events ||--o{ ticket_tiers : "offers"
-    events ||--o{ orders : "generates"
-    events ||--o{ registrations : "has"
-    events ||--o{ favorites : "favorited by"
-    events ||--o{ event_views : "has"
-    events ||--o{ reviews : "receives"
-    events ||--o{ coupons : "has"
+    TICKET_TIERS ||--o{ TICKET_TIER_BENEFITS : has
+    TICKET_TIERS ||--o{ TICKETS : generates
+    TICKET_TIERS ||--o{ ORDER_ITEMS : contains
 
-    ticket_tiers ||--o{ ticket_tier_benefits : "has"
-    ticket_tiers ||--o{ tickets : "generates"
-    ticket_tiers ||--o{ order_items : "ordered as"
+    ORDERS ||--o{ ORDER_ITEMS : contains
+    ORDERS ||--o{ PAYMENTS : has
+    ORDERS ||--o{ TICKETS : generates
+    ORDERS ||--o{ REFUNDS : has
+    ORDERS ||--o| REGISTRATIONS : creates
+    ORDERS ||--o{ COUPON_USAGE : uses
 
-    orders ||--o{ order_items : "contains"
-    orders ||--o{ payments : "has"
-    orders ||--o{ tickets : "generates"
-    orders ||--o{ refunds : "may have"
-    orders ||--o| registrations : "creates"
-    orders ||--o{ coupon_usage : "may use"
-
-    coupons ||--o{ coupon_usage : "tracked by"
+    COUPONS ||--o{ COUPON_USAGE : tracked_by
 ```
 
 ---
 
 ## 📊 Database Tables Summary
 
-### Core Tables (28 tables)
-
 | Category | Tables | Description |
 |----------|--------|-------------|
-| **👤 Users & Auth** | `users`, `user_sessions`, `password_resets` | User management and authentication |
-| **🏢 Organizers** | `organizers`, `organizer_applications`, `organizer_documents` | Event organizer management |
-| **📍 Geographic** | `regions`, `cities`, `venues`, `venue_images`, `venue_amenities` | Location and venue management |
-| **🏷️ Event Types** | `event_types`, `event_tags` | Event categorization |
-| **🎉 Events** | `events`, `event_images`, `event_attachments`, `event_tag_mapping` | Core event data |
-| **🎫 Tickets** | `ticket_tiers`, `ticket_tier_benefits`, `tickets` | Ticketing system |
-| **🛒 Orders** | `orders`, `order_items`, `payments`, `refunds` | Order and payment processing |
-| **📝 Registrations** | `registrations` | Event registrations |
-| **🎁 Coupons** | `coupons`, `coupon_usage` | Discount and promotion system |
-| **❤️ User Interactions** | `favorites`, `event_views`, `reviews` | User engagement tracking |
-| **🔔 Notifications** | `notifications`, `notification_preferences` | Notification system |
-| **⚙️ Admin** | `admin_activity_logs`, `system_settings`, `payouts` | System administration |
+| 👤 **Users & Auth** | `users`, `user_sessions` | User management and authentication |
+| 🏢 **Organizers** | `organizers`, `organizer_documents` | Event organizer management |
+| 📍 **Geographic** | `regions`, `cities`, `venues`, `venue_images`, `venue_amenities` | Location and venue management |
+| 🏷️ **Event Types** | `event_types`, `event_tags` | Event categorization |
+| 🎉 **Events** | `events`, `event_images`, `event_attachments`, `event_tag_mapping` | Core event data |
+| 🎫 **Tickets** | `ticket_tiers`, `ticket_tier_benefits`, `tickets` | Ticketing system |
+| 🛒 **Orders** | `orders`, `order_items`, `payments`, `refunds` | Order and payment processing |
+| 📝 **Registrations** | `registrations` | Event registrations |
+| 🎁 **Coupons** | `coupons`, `coupon_usage` | Discount and promotion system |
+| ❤️ **User Interactions** | `favorites`, `event_views`, `reviews` | User engagement tracking |
+| 🔔 **Notifications** | `notifications`, `notification_preferences` | Notification system |
+| ⚙️ **Admin** | `admin_activity_logs`, `system_settings`, `payouts` | System administration |
 
 ---
 
@@ -678,7 +575,6 @@ erDiagram
 -- Users
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role);
-CREATE INDEX idx_users_is_active ON users(is_active);
 
 -- Events
 CREATE INDEX idx_events_organizer ON events(organizer_id);
@@ -687,54 +583,81 @@ CREATE INDEX idx_events_type ON events(type_id);
 CREATE INDEX idx_events_status ON events(status);
 CREATE INDEX idx_events_date_start ON events(date_start);
 CREATE INDEX idx_events_is_featured ON events(is_featured);
-CREATE INDEX idx_events_slug ON events(slug);
+CREATE UNIQUE INDEX idx_events_slug ON events(slug);
 
 -- Tickets
 CREATE INDEX idx_tickets_event ON tickets(event_id);
 CREATE INDEX idx_tickets_user ON tickets(user_id);
 CREATE INDEX idx_tickets_status ON tickets(status);
-CREATE INDEX idx_tickets_number ON tickets(ticket_number);
-CREATE INDEX idx_tickets_qr ON tickets(qr_code);
+CREATE UNIQUE INDEX idx_tickets_number ON tickets(ticket_number);
+CREATE UNIQUE INDEX idx_tickets_qr ON tickets(qr_code);
 
 -- Orders
 CREATE INDEX idx_orders_user ON orders(user_id);
 CREATE INDEX idx_orders_event ON orders(event_id);
 CREATE INDEX idx_orders_status ON orders(status);
-CREATE INDEX idx_orders_number ON orders(order_number);
+CREATE UNIQUE INDEX idx_orders_number ON orders(order_number);
 
--- Registrations
-CREATE INDEX idx_registrations_event ON registrations(event_id);
-CREATE INDEX idx_registrations_user ON registrations(user_id);
-
--- Favorites (Unique constraint)
+-- Favorites
 CREATE UNIQUE INDEX idx_favorites_user_event ON favorites(user_id, event_id);
 ```
 
 ---
 
-## 📋 Data Types Reference
+## 📋 Status Enums
 
-| Type | Usage |
-|------|-------|
-| `UUID` | Primary keys, foreign keys |
-| `VARCHAR(n)` | Short text fields |
-| `TEXT` | Long text content |
-| `DECIMAL(p,s)` | Money, ratings, coordinates |
-| `INT` | Counts, quantities |
-| `BOOLEAN` | Flags, toggles |
-| `TIMESTAMP` | Dates, times |
-| `JSON` | Flexible structured data |
-| `ENUM` | Status fields, fixed options |
+### User Roles
+| Value | Description |
+|-------|-------------|
+| `admin` | System administrator |
+| `organizer` | Event organizer |
+| `user` | Regular user |
+
+### Event Status
+| Value | Description |
+|-------|-------------|
+| `draft` | Not published yet |
+| `pending` | Awaiting approval |
+| `published` | Live and visible |
+| `closed` | Registration closed |
+| `completed` | Event finished |
+| `cancelled` | Event cancelled |
+
+### Ticket Status
+| Value | Description |
+|-------|-------------|
+| `active` | Valid for entry |
+| `used` | Already checked in |
+| `cancelled` | Cancelled by user |
+| `expired` | Past event date |
+| `refunded` | Money returned |
+
+### Order Status
+| Value | Description |
+|-------|-------------|
+| `pending` | Awaiting payment |
+| `processing` | Payment in progress |
+| `completed` | Successfully paid |
+| `cancelled` | Order cancelled |
+| `refunded` | Fully refunded |
+
+### Payment Status
+| Value | Description |
+|-------|-------------|
+| `pending` | Not paid yet |
+| `paid` | Successfully paid |
+| `failed` | Payment failed |
+| `refunded` | Refunded |
 
 ---
 
 ## 🔒 Security Notes
 
-- **Passwords**: Stored as bcrypt hashes, never plain text
-- **Tokens**: Session tokens use secure random generation
-- **UUIDs**: Used for all IDs to prevent enumeration attacks
-- **Soft Deletes**: `deleted_at` column preserves data integrity
-- **Audit Trail**: `admin_activity_logs` tracks all admin actions
+- **Passwords**: Stored as bcrypt hashes
+- **Tokens**: Secure random generation
+- **UUIDs**: Prevent enumeration attacks
+- **Soft Deletes**: `deleted_at` column
+- **Audit Trail**: All admin actions logged
 
 ---
 
